@@ -1,0 +1,5 @@
+You will need to install some packages to run scikit learn and others.
+For python, the best way to install the libraries is from "pip".
+Look up how to install pip on your OS. I am on arch so it was just "pacman -S python-pip"
+Then you can install packages by doing (for example):
+pip install scikit-learn
