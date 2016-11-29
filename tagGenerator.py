@@ -3,6 +3,7 @@
 from sklearn import linear_model
 import sys
 import json
+from bs4 import BeautifulSoup
 
 def readData(filename):
     games = []
@@ -13,18 +14,23 @@ def readData(filename):
             appid = line[line.find("\"")+1:line.find(":")-1]
             
             gameJson = json.loads(line)
-            
+
+            #Basically if it is not a game
             if not "data" in gameJson[appid]:
                 continue
 
+            #If it doesn't have any tags
             if not "categories" in gameJson[appid]["data"]:
                 continue
 
             tags = []
             for category in gameJson[appid]["data"]["categories"]:
                 tags.append(category["description"])
-            
-            game = {"name": gameJson[appid]["data"]["name"], "description": gameJson[appid]["data"]["detailed_description"], "tags" : tags}
+           
+            #remove html tags like <br> from the description
+            cleanDescription = BeautifulSoup(gameJson[appid]["data"]["detailed_description"]).text            
+
+            game = {"name": gameJson[appid]["data"]["name"], "description": cleanDescription, "tags" : tags}
             games.append(game)
 
     return games
@@ -41,6 +47,6 @@ def main():
     games = readData(inputFilename)
 
     for game in games:
-        print(game)
+        print(str(game).encode('utf-8'))
 
 main()

@@ -22,14 +22,16 @@ def writeDescriptionsToFile(appids, filename):
     
     with open(filename, 'w') as f:
         for appid in appids:
-            r = requests.get("http://store.steampowered.com/api/appdetails?appids=" + appid)
-            #f.write(str(r.text.encode("utf-8")) + "\n")
-            #f.write("{" + appid +"}")
-            json.dump(r.json(), f)
-            f.write("\n")
-
             #Steam only allows around one request per a second without banning you
             time.sleep(1)
+
+            try:
+                r = requests.get("http://store.steampowered.com/api/appdetails?appids=" + appid)
+                json.dump(r.json(), f)
+                f.write("\n")
+            except:
+                print("Unexpected error:", sys.exc_info()[0])
+                continue
 
 def main():
 
