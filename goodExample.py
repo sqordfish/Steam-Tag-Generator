@@ -1,5 +1,3 @@
-# Generates tags for steam games
-
 print(__doc__)
 
 
