@@ -60,7 +60,7 @@ def multilabelClassify(games):
     testTrainingSet = []
     mapDescToName = {}
     
-    for i in range(10):
+    for i in range(15):
         testGames.append(games.pop())
 
     for game in testGames:
@@ -69,14 +69,16 @@ def multilabelClassify(games):
 
     for game in games:
         descTrainingSet.append(game["description"])
-        numberedTags = []
-
-        for tag in allTags:
-            if tag in game["tags"]:
+        tagTrainingSet.append(game["tags"])
+        #numberedTags = []
+    
+        #for tag in allTags:
+        #    if tag in game["tags"]:
                 #print(tag + " is at index " + str(allTags.index(tag)))
-                numberedTags.append(allTags.index(tag))
+        #        numberedTags.append(tag)
+                #numberedTags.append(allTags.index(tag))
         
-        tagTrainingSet.append(numberedTags)
+        #tagTrainingSet.append(numberedTags)
 
     #print("Printing desctrainingset")
     #for d in descTrainingSet:
@@ -85,12 +87,21 @@ def multilabelClassify(games):
     #print("Printing TAGtrainingset")
     #for t in tagTrainingSet:
     #    print(str(t).encode('utf-8'))
+    #    for a in t:
+    #        print(allTags[a].encode('utf-8'))
 
     #print(str(len(descTrainingSet)) + " == " + str(len(tagTrainingSet)) + " ?")
     
     descTrainingSet = np.array(descTrainingSet)
     testTrainingSet = np.array(testTrainingSet)
-    tagTrainingSet = MultiLabelBinarizer().fit_transform(tagTrainingSet)
+    mlb = MultiLabelBinarizer()
+    
+    tagTrainingSet = mlb.fit_transform(tagTrainingSet)
+
+    for l in tagTrainingSet:
+        print(str(l))
+
+    print(str(mlb.classes_))
     
     classifier = Pipeline([
         ('vectorizer', CountVectorizer()),
@@ -100,14 +111,22 @@ def multilabelClassify(games):
     classifier.fit(descTrainingSet, tagTrainingSet)
 
     predicted = classifier.predict(testTrainingSet)
+    allLabels = mlb.inverse_transform(predicted)
 
-
-    for item, labels in zip(testTrainingSet, predicted):
-            print(("%s => %s" % (mapDescToName[item], ', '.join(allTags[x] for x in labels))).encode('utf-8'))
+    print("Predicted...")
+    for item, labels in zip(testTrainingSet, allLabels):
+#        print(("%s => %s" % (mapDescToName[item], ', '.join(allTags[x] for x in labels))).encode('utf-8'))
+        print(("%s => %s" % (mapDescToName[item], ', '.join(labels))).encode('utf-8'))
 
     #for tag in allTags:
     #    print(tag)
-
+    
+    #for tag in allTags:
+    #    print(tag + " -> " + str(allTags.index(tag)))
+        
+    print("\nExpected...")
+    for game in testGames:
+        print((game["name"] + " -> " + str(game["tags"])).encode('utf-8'))
 
 def main():
     
