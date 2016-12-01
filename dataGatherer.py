@@ -4,6 +4,7 @@ import requests
 import sys
 import time
 import json
+import re
 
 def getAppIDs():
     appids = []
@@ -26,8 +27,29 @@ def writeDescriptionsToFile(appids, filename):
             time.sleep(1)
 
             try:
-                r = requests.get("http://store.steampowered.com/api/appdetails?appids=" + appid)
-                json.dump(r.json(), f)
+                apiRequest = requests.get("http://store.steampowered.com/api/appdetails?appids=" + appid)
+                
+                #Wait another second inbetween requests
+                time.sleep(1)
+                
+                #Scrape default steam webpage for the game for the user generated tags
+                tagRequest = requests.get("http://store.steampowered.com/app/" + appid)
+                tagRegex = re.findall("<a[^>]*class=\\\"app_tag\\\"[^>]*>([^<]*)</a>", tagRequest.text)
+                tags = []
+
+                for tag in tagRegex:
+                    tags.append(str(tag).strip())
+                
+                #Create a new JSON object with the user generated tags included
+                gameJson = json.loads(apiRequest.text)
+                tagJson = {'tagsForAI' : tags}
+                newJson = gameJson.copy()
+                newJson.update(tagJson)
+
+                #print(str(newJson))
+                #print(str(tagRegex).encode('utf-8'))
+                #print("test")
+                json.dump(newJson, f)
                 f.write("\n")
             except:
                 print("Unexpected error:", sys.exc_info()[0])
