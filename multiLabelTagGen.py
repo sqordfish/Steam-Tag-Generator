@@ -11,6 +11,8 @@ import numpy as np
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.svm import LinearSVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import MultiLabelBinarizer
@@ -106,11 +108,13 @@ def multilabelClassify(games, testGames):
     #    print(str(l))
 
     #print(str(mlb.classes_))
-    
+   
     classifier = Pipeline([
         ('vectorizer', CountVectorizer()),
         ('tfidf', TfidfTransformer()),
         ('clf', OneVsRestClassifier(LinearSVC()))])
+        #('clf', OneVsRestClassifier(KNeighborsClassifier()))])
+        #('clf', OneVsRestClassifier(RandomForestClassifier()))])
 
     classifier.fit(descTrainingSet, tagTrainingSet)
 
