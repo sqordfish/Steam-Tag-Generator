@@ -4,6 +4,8 @@ from sklearn import linear_model
 import sys
 import json
 from bs4 import BeautifulSoup
+import random
+import difflib
 
 import numpy as np
 from sklearn.pipeline import Pipeline
@@ -31,9 +33,10 @@ def readData(filename):
             if not "categories" in gameJson[appid]["data"]:
                 continue
 
-            tags = []
-            for category in gameJson[appid]["data"]["categories"]:
-                tags.append(category["description"])
+            tags = gameJson["tagsForAI"]
+            #tags = []
+            #for category in gameJson[appid]["data"]["categories"]:
+            #    tags.append(category["description"])
            
             #remove html tags like <br> from the description
             cleanDescription = BeautifulSoup(gameJson[appid]["data"]["detailed_description"], "html.parser").text            
@@ -51,17 +54,17 @@ def genTagList(games):
 
     return list(set(allTags))
 
-def multilabelClassify(games):
+def multilabelClassify(games, testGames):
     allTags = genTagList(games)
     
     descTrainingSet = []
     tagTrainingSet = []
-    testGames = []
+    #testGames = []
     testTrainingSet = []
     mapDescToName = {}
     
-    for i in range(15):
-        testGames.append(games.pop())
+    #for i in range(10):
+    #    testGames.append(games.pop())
 
     for game in testGames:
         testTrainingSet.append(game["description"])
@@ -98,10 +101,11 @@ def multilabelClassify(games):
     
     tagTrainingSet = mlb.fit_transform(tagTrainingSet)
 
-    for l in tagTrainingSet:
-        print(str(l))
+    #print("Printing all tags...")
+    #for l in tagTrainingSet:
+    #    print(str(l))
 
-    print(str(mlb.classes_))
+    #print(str(mlb.classes_))
     
     classifier = Pipeline([
         ('vectorizer', CountVectorizer()),
@@ -109,6 +113,7 @@ def multilabelClassify(games):
         ('clf', OneVsRestClassifier(LinearSVC()))])
 
     classifier.fit(descTrainingSet, tagTrainingSet)
+
 
     predicted = classifier.predict(testTrainingSet)
     allLabels = mlb.inverse_transform(predicted)
@@ -128,6 +133,41 @@ def multilabelClassify(games):
     for game in testGames:
         print((game["name"] + " -> " + str(game["tags"])).encode('utf-8'))
 
+
+#Randomly chooses n games to test
+def genRandomTestGames(games, n):
+    testGames = []
+    
+    for i in range(n):
+        testGames.append(games.pop(games.index(random.choice(games))))
+    
+    return testGames
+
+
+def getChosenGames(games, n):
+    names = [g["name"] for g in games]
+    testGames = []
+
+    for i in range(n):
+        valid = False
+
+        while(not valid):
+            name = input("Enter game name: ")
+            if name not in names:
+                print("Did you mean one of these?: " + str(difflib.get_close_matches(name, names)))
+                continue
+            else:
+                for game in games:
+                    if game["name"] == name:
+                        testGame = game
+
+                testGames.append(games.pop(games.index(testGame)))
+                break
+
+    return testGames
+
+
+
 def main():
     
     if len(sys.argv) != 2:
@@ -136,13 +176,49 @@ def main():
 
     inputFilename = sys.argv[1]
 
+    print("***Welcome to the Steam Tag Generator!***\n")
+    print("Reading game data from " + inputFilename + "...\n")
+    
     #List of games. Each game is a dictionary containing name, description, and list of tags
     games = readData(inputFilename)
 
+    quit = False
+    validOptions = ["random","choose","create","help","quit"]
 
-    multilabelClassify(games)
+    while(not quit):
+        option = input("How would you like to test the classifier? (random/choose/create/help/quit): ")
+        
+        if option not in validOptions:
+            print("Invalid option. Valid options are random, choose, create, help, and quit.\n")
+            continue
 
-       #for game in games:
-    #    print(str(game).encode('utf-8'))
+        elif option == "quit":
+            quit = True
+            break
+
+        elif option == "help":
+            print("random: Randomly generates a test set from all available steam games.")
+            print("choose: Generate a test set from a list of steam games that you specify.")
+            print("create: Write your own game description in the console and have tags generated for it.")
+            print("help: Display a help menu.")
+            print("quit: Exit the program.\n")
+            continue
+
+        elif option == "random":
+            n = input("How many games should be in the random test set?: ")
+            testGames = genRandomTestGames(games, int(n))
+
+        elif option == "choose":
+            n = input("How many games would you like to choose?: ")
+            testGames = getChosenGames(games, int(n))
+
+        elif option == "create":
+            name = input("Enter a name for your game: ")
+            description = input("Enter a description for your game: ")
+            game = {"name" : name, "description" : description, "tags" : [] }            
+            testGames = [game]
+        
+        multilabelClassify(games, testGames)
+        print("\n\n")
 
 main()
