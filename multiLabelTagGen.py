@@ -113,8 +113,8 @@ def multilabelClassify(games, testGames):
         ('vectorizer', CountVectorizer()),
         ('tfidf', TfidfTransformer()),
         ('clf', OneVsRestClassifier(LinearSVC()))])
-        #('clf', OneVsRestClassifier(KNeighborsClassifier()))])
-        #('clf', OneVsRestClassifier(RandomForestClassifier()))])
+        #('clf', KNeighborsClassifier())])
+        #('clf',RandomForestClassifier())])
 
     classifier.fit(descTrainingSet, tagTrainingSet)
 
@@ -221,7 +221,8 @@ def main():
             description = input("Enter a description for your game: ")
             game = {"name" : name, "description" : description, "tags" : [] }            
             testGames = [game]
-        
+       
+        print("\nTraining classifier...\n")
         multilabelClassify(games, testGames)
         print("\n\n")
 
